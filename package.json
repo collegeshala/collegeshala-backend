@@ -9,6 +9,7 @@
   "author": "Mujtaba Basheer, Sayatan",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.653.0",
     "bcrypt": "^4.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
