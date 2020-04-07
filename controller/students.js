@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const dotenv = require("dotenv");
+const GetNotes = require("./notes");
 dotenv.config();
 
 AWS.config.update({
@@ -53,11 +54,25 @@ const AddItem = (data) => {
         degree,
         semester,
         phoneNo,
+        purchasedNotes,
     } = data;
 
-    var params = {
+    let date_obj = new Date();
+    const timeOfCreation = date_obj.toISOString();
+
+    const params = {
         TableName: "students",
-        Item: { fullName, email, password, college, degree, semester, phoneNo },
+        Item: {
+            fullName,
+            email,
+            password,
+            college,
+            degree,
+            semester,
+            phoneNo,
+            purchasedNotes,
+            timeOfCreation,
+        },
     };
 
     console.log("Adding a new item...");
@@ -117,6 +132,7 @@ const ScanTable = () => {
 
 const GetItem = (data) => {
     const { email, fullName } = data;
+    // const { email } = data;
 
     const params = {
         TableName: "students",
@@ -126,6 +142,8 @@ const GetItem = (data) => {
         },
     };
 
+    let student;
+
     docClient.get(params, (err, data) => {
         if (err) {
             console.error(
@@ -133,27 +151,59 @@ const GetItem = (data) => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+            // console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+            // console.log(data.Item);
         }
     });
+
+    return student;
+};
+
+const GetPurchasedNotes = data => {
+    const { email, fullName } = data;
+
+    docClient.get(
+        {
+            TableName: "students",
+            Key: {
+                email,
+                fullName,
+            },
+        },
+        (err, data) => {
+            if (err) {
+                console.error(
+                    "Unable to read item. Error JSON:",
+                    JSON.stringify(err, null, 2)
+                );
+            } else {
+                notes = data.Item.purchasedNotes;
+                //console.log(JSON.stringify(notes));
+                notes.map(noteid => GetNotes({ noteid }))
+                // console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+            }
+        }
+    );
 };
 
 // CreateTable();
 
 // AddItem({
-//     fullName: "College Shala",
-//     email: "college_shala@gmail.com",
+//     fullName: "Test Student 1",
+//     email: "teststudent1@gmail.com",
 //     password: "qwerty",
 //     college: "HIT-K",
 //     degree: "B. Tech. CSE",
-//     semester: 4,
+//     semester: 5,
 //     phoneNo: "9477388223",
-//     timeOfCreation: Date.now().toString(),
+//     purchasedNotes: ["fr56yvfrt6uj", "jki76trfcvbhy5esx"],
 // });
 
 // ScanTable();
 
-// GetItem({
-//     fullName: "Mujtaba Basheer",
-//     email: "mujtababasheer14@gmail.com"
-// })
+// GetItem({ fullName: "Test Student 1", email: "teststudent1@gmail.com" });
+
+GetPurchasedNotes({
+    email: "teststudent1@gmail.com",
+    fullName: "Test Student 1",
+});
