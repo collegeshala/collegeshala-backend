@@ -53,11 +53,15 @@ const AddItem = (data) => {
         dept,
         subject,
         phoneNo,
+        credit,
     } = data;
+
+    let date_obj = new Date();
+    const timeOfCreation = date_obj.toISOString();
 
     var params = {
         TableName: "professors",
-        Item: { fullName, email, password, college, dept, subject, phoneNo },
+        Item: { fullName, email, password, college, dept, subject, phoneNo, timeOfCreation, credit },
     };
 
     console.log("Adding a new item...");
@@ -138,17 +142,41 @@ const GetItem = (data) => {
     });
 };
 
+const GetCredits = data => {
+
+    const { email, fullName, rate } = data;
+
+    const params = {
+        TableName: "professors",
+        Key: { email, fullName }
+    }
+
+    docClient.get(params, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            const { credit } = data.Item;
+            const value = credit * rate;
+
+            console.log("GetCredits succeeded:", JSON.stringify({ credit, value }, null, 2));
+        }
+    });
+}
+
 // CreateTable();
 
 // AddItem({
-//     fullName: "Sabyasachi Banerjee",
-//     email: "scb@gmail.com",
+//     fullName: "Test Professor 1",
+//     email: "testprof1@gmail.com",
 //     password: "qwerty",
 //     college: "HIT-K",
 //     dept: "CSE",
 //     subject: "Programming in C",
 //     phoneNo: "9477388223",
-//     timeOfCreation: Date.now().toString(),
+//     credit: 14,
 // });
 
 // ScanTable();
@@ -157,3 +185,9 @@ const GetItem = (data) => {
 //     fullName: "Mujtaba Basheer",
 //     email: "mujtababasheer14@gmail.com"
 // })
+
+GetCredits({
+    email: "testprof1@gmail.com",
+    fullName: "Test Professor 1",
+    rate: 10,
+});
