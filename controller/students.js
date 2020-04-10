@@ -55,6 +55,7 @@ const AddItem = (data) => {
         semester,
         phoneNo,
         purchasedNotes,
+        cart,
     } = data;
 
     let date_obj = new Date();
@@ -72,6 +73,7 @@ const AddItem = (data) => {
             phoneNo,
             purchasedNotes,
             timeOfCreation,
+            cart
         },
     };
 
@@ -151,8 +153,7 @@ const GetItem = (data) => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-            // console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
-            // console.log(data.Item);
+            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
         }
     });
 
@@ -186,24 +187,71 @@ const GetPurchasedNotes = data => {
     );
 };
 
+const UpdateCart = data => {
+    const { email, fullName } = data;
+
+    const getParams = {
+        TableName: "students",
+        Key: {
+            email,
+            fullName,
+        },
+    }
+
+    docClient.get(getParams, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            const { cart, purchasedNotes } = data.Item;
+            const updatedPurchasedNotes = purchasedNotes.concat(cart);
+
+            const updateParams = {
+                TableName: "students",
+                Key: { email, fullName },
+                UpdateExpression: "set cart = :c, purchasedNotes = :p",
+                ExpressionAttributeValues: {
+                    ":c": [],
+                    ":p": updatedPurchasedNotes,
+                },
+                ReturnValues: "UPDATED_NEW",
+            };
+
+            console.log("Updating the item...");
+            docClient.update(updateParams, (err, data) => {
+                if (err) {
+                    console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+                }
+            });
+        }
+    });
+}
+
 // CreateTable();
 
 // AddItem({
-//     fullName: "Test Student 1",
-//     email: "teststudent1@gmail.com",
+//     fullName: "Test Student 2",
+//     email: "teststudent2@gmail.com",
 //     password: "qwerty",
 //     college: "HIT-K",
 //     degree: "B. Tech. CSE",
 //     semester: 5,
 //     phoneNo: "9477388223",
-//     purchasedNotes: ["fr56yvfrt6uj", "jki76trfcvbhy5esx"],
+//     purchasedNotes: ["fr56yvfrt6uj",],
+//     cart: ["jki76trfcvbhy5esx",]
 // });
 
 // ScanTable();
 
-// GetItem({ fullName: "Test Student 1", email: "teststudent1@gmail.com" });
+// GetItem({ fullName: "Test Student 2", email: "teststudent2@gmail.com" });
 
-GetPurchasedNotes({
-    email: "teststudent1@gmail.com",
-    fullName: "Test Student 1",
-});
+// GetPurchasedNotes({
+//     email: "teststudent1@gmail.com",
+//     fullName: "Test Student 1",
+// });
+
+// UpdateCart({ fullName: "Test Student 2", email: "teststudent2@gmail.com" });
