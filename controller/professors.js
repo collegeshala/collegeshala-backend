@@ -159,7 +159,7 @@ const GetCredits = data => {
             );
         } else {
             const { credit } = data.Item;
-            const value = credit * rate;
+            const value = credit * (rate || 10);
 
             console.log("GetCredits succeeded:", JSON.stringify({ credit, value }, null, 2));
         }
@@ -189,5 +189,5 @@ const GetCredits = data => {
 GetCredits({
     email: "testprof1@gmail.com",
     fullName: "Test Professor 1",
-    rate: 10,
+    // rate: 10,
 });
