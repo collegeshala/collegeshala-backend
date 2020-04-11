@@ -1,6 +1,6 @@
 const AWS = require("aws-sdk");
 const dotenv = require("dotenv");
-const GetNotes = require("./notes");
+const Notes = require("./notes");
 dotenv.config();
 
 AWS.config.update({
@@ -180,8 +180,7 @@ const GetPurchasedNotes = data => {
             } else {
                 notes = data.Item.purchasedNotes;
                 //console.log(JSON.stringify(notes));
-                notes.map(noteid => GetNotes({ noteid }))
-                // console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+                Notes.GetBatchNotes(notes);
             }
         }
     );

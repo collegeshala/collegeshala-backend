@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prof": "node controller/professors.js"
+    "prof": "node controller/professors.js",
+    "student": "node controller/students.js"
   },
   "author": "Mujtaba Basheer, Sayatan",
   "license": "ISC",

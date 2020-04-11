@@ -101,7 +101,7 @@ const ScanTable = () => {
     }
 };
 
-const GetItem = (data) => {
+exports.GetItem = (data) => {
     const { noteid } = data;
 
     const params = {
@@ -124,15 +124,38 @@ const GetItem = (data) => {
     });
 };
 
+exports.GetBatchNotes = noteids => {
+
+    const keys = noteids.map(noteid => { return { "noteid": {"S": noteid} } });
+    // const keys = noteids.map(noteid => { return { noteid } });
+
+    const params = {
+        RequestItems: {
+            "notes": {
+                Keys: keys,
+            }
+        }
+    };
+
+    dynamodb.batchGetItem(params, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else     console.log(JSON.stringify(data.Responses.notes));           // successful response
+    })
+};
+
+// ScanTable();
+
 // CreateTable();
 
 // AddItem({
-//     noteid: "fr56yvfrt6uj",
-//     name: "Polarization of Light",
-//     professor: "Himadri Ghosh",
-//     url: "physics.com"
-// })
+//     noteid: "sdfghi98765re",
+//     name: "Test Subject 3",
+//     professor: "Test Professor 3",
+//     url: "what_ever.com"
+// });
 
 // GetItem({ noteid: "fr56yvfrt6uj" });
 
-module.exports = GetItem;
+// GetBatchNotes(["jki76trfcvbhy5esx", "nvfde4567ujn", "sdfghi98765re"]);
+
+// module.exports = GetItem;

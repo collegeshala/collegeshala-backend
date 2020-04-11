@@ -1,4 +1,5 @@
 const AWS = require("aws-sdk");
+const Notes = require("./notes");
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -54,6 +55,7 @@ const AddItem = (data) => {
         subject,
         phoneNo,
         credit,
+        uploadedNotes,
     } = data;
 
     let date_obj = new Date();
@@ -61,7 +63,7 @@ const AddItem = (data) => {
 
     var params = {
         TableName: "professors",
-        Item: { fullName, email, password, college, dept, subject, phoneNo, timeOfCreation, credit },
+        Item: { fullName, email, password, college, dept, subject, phoneNo, timeOfCreation, credit, uploadedNotes },
     };
 
     console.log("Adding a new item...");
@@ -166,17 +168,42 @@ const GetCredits = data => {
     });
 }
 
+const GetUploadedNotes = data => {
+
+    const { email, fullName } = data;
+
+    const params = {
+        TableName: "professors",
+        Key: { email, fullName }
+    }
+
+    docClient.get(params, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            const { uploadedNotes } = data.Item;
+
+            console.log("Getting uploaded notes...");
+            Notes.GetBatchNotes(uploadedNotes);
+        }
+    });
+}
+
 // CreateTable();
 
 // AddItem({
-//     fullName: "Test Professor 1",
-//     email: "testprof1@gmail.com",
+//     fullName: "Test Professor 5",
+//     email: "testprof5@gmail.com",
 //     password: "qwerty",
 //     college: "HIT-K",
 //     dept: "CSE",
-//     subject: "Programming in C",
+//     subject: "Test Subject 5",
 //     phoneNo: "9477388223",
-//     credit: 14,
+//     credit: 13,
+//     uploadedNotes: ["ki7thy54es", "jki76trfcvbhy5esx", "fr56yvfrt6uj"],
 // });
 
 // ScanTable();
@@ -186,8 +213,13 @@ const GetCredits = data => {
 //     email: "mujtababasheer14@gmail.com"
 // })
 
-GetCredits({
-    email: "testprof1@gmail.com",
-    fullName: "Test Professor 1",
-    // rate: 10,
-});
+// GetCredits({
+//     email: "testprof1@gmail.com",
+//     fullName: "Test Professor 1",
+//     // rate: 10,
+// });
+
+// GetUploadedNotes({
+//     email: "testprof5@gmail.com",
+//     fullName: "Test Professor 5",
+// });
