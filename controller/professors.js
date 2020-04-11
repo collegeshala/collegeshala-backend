@@ -192,6 +192,61 @@ const GetUploadedNotes = data => {
     });
 }
 
+const UploadNotes = args => {
+
+    // args = {
+    //     professor: { email: '<email>', fullName: '<full_name>' },
+    //     notes: [
+    //         { noteid: '<note_id>', name: '<name>', professor: '<prof_name>', url: '<note_url>' },
+    //         ......
+    //     ]
+    // }
+
+    const { professor, notes } = args;
+    const { email, fullName } = professor;
+    // console.log(JSON.stringify(professor));
+
+    const params = {
+        TableName: "professors",
+        Key: professor,
+    };
+
+    docClient.get(params, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            const { uploadedNotes } = data.Item;
+
+            console.log("Uploading notes...");
+            Notes.AddNotes(notes);
+
+            const newNotesId = notes.map(note => note.noteid);
+            const updatedUploadedNotes = uploadedNotes.concat(newNotesId);
+
+            const updateParams = {
+                TableName: "professors",
+                Key: { email, fullName },
+                UpdateExpression: "set uploadedNotes = :u",
+                ExpressionAttributeValues: {
+                    ":u": updatedUploadedNotes,
+                },
+                ReturnValues: "UPDATED_NEW",
+            };
+
+            docClient.update(updateParams, (err, data) => {
+                if (err) {
+                    console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    console.log("uploadedNotes successfully updated:", JSON.stringify(data, null, 2));
+                }
+            });
+        }
+    });
+}
+
 // CreateTable();
 
 // AddItem({
@@ -222,4 +277,19 @@ const GetUploadedNotes = data => {
 // GetUploadedNotes({
 //     email: "testprof5@gmail.com",
 //     fullName: "Test Professor 5",
+// });
+
+// UploadNotes({
+//     professor: {
+//         email: "testprof5@gmail.com",
+//         fullName: "Test Professor 5",
+//     },
+//     notes: [
+//         {
+//             noteid: "note_id_1", name: "Note 1", professor: "Test Professor 5", url: "randomurl.com"
+//         },
+//         {
+//             noteid: "note_id_2", name: "Note 2", professor: "Test Professor 5", url: "randomurl.com"
+//         },
+//     ]
 // });
