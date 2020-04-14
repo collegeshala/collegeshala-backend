@@ -56,6 +56,7 @@ const AddItem = (data) => {
         phoneNo,
         purchasedNotes,
         cart,
+        credits,
     } = data;
 
     let date_obj = new Date();
@@ -73,7 +74,8 @@ const AddItem = (data) => {
             phoneNo,
             purchasedNotes,
             timeOfCreation,
-            cart
+            cart,
+            credits,
         },
     };
 
@@ -153,14 +155,17 @@ const GetItem = (data) => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+            console.log(
+                "GetItem succeeded:",
+                JSON.stringify(data.Item, null, 2)
+            );
         }
     });
 
     return student;
 };
 
-const GetPurchasedNotes = data => {
+const GetPurchasedNotes = (data) => {
     const { email, fullName } = data;
 
     docClient.get(
@@ -186,7 +191,7 @@ const GetPurchasedNotes = data => {
     );
 };
 
-const UpdateCart = data => {
+const UpdateCart = (data) => {
     const { email, fullName } = data;
 
     const getParams = {
@@ -195,7 +200,7 @@ const UpdateCart = data => {
             email,
             fullName,
         },
-    }
+    };
 
     docClient.get(getParams, (err, data) => {
         if (err) {
@@ -221,32 +226,139 @@ const UpdateCart = data => {
             console.log("Updating the item...");
             docClient.update(updateParams, (err, data) => {
                 if (err) {
-                    console.error("Unable to update item. Error JSON:", JSON.stringify(err, null, 2));
+                    console.error(
+                        "Unable to update item. Error JSON:",
+                        JSON.stringify(err, null, 2)
+                    );
                 } else {
-                    console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+                    console.log(
+                        "UpdateItem succeeded:",
+                        JSON.stringify(data, null, 2)
+                    );
                 }
             });
         }
     });
-}
+};
+
+const CheckoutCredits = (data) => {
+    const { email, fullName } = data;
+
+    const params = {
+        TableName: "students",
+        Key: {
+            email,
+            fullName,
+        },
+    };
+
+    // getting list of purchased notes' ids
+    docClient.get(params, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            const { credits, cart } = data.Item;
+
+            const keys = cart.map((noteid) => {
+                return { noteid: { S: noteid } };
+            });
+
+            const params = {
+                RequestItems: {
+                    notes: {
+                        Keys: keys,
+                    },
+                },
+            };
+
+            // getting requiredCredits for each note in student's cart
+            dynamodb.batchGetItem(params, function (err, data) {
+                if (err) console.log(err, err.stack);
+                // an error occurred
+                else {
+                    // console.log(JSON.stringify(data.Responses.notes)); // successful response
+                    let cost = 0;
+                    for (note of data.Responses.notes) {
+                        cost += note.requiredCredits.N * 1;
+                        // console.log(note.requiredCredits.N);
+                    }
+                    // console.log(cost);
+
+                    if (credits < cost) {
+                        console.log("Insufficient credits!");
+                        return;
+                    }
+                    const newCredits = credits - cost;
+
+                    const updateParams = {
+                        TableName: "students",
+                        Key: { email, fullName },
+                        UpdateExpression: "set credits = :c",
+                        ExpressionAttributeValues: {
+                            ":c": newCredits,
+                        },
+                        ReturnValues: "UPDATED_NEW",
+                    };
+
+                    // updating the student's current credits
+                    docClient.update(updateParams, (err, data) => {
+                        if (err) {
+                            console.error(
+                                "Unable to update item. Error JSON:",
+                                JSON.stringify(err, null, 2)
+                            );
+                        } else {
+                            console.log(
+                                "UpdateItem succeeded:",
+                                JSON.stringify(data, null, 2)
+                            );
+                        }
+                    });
+                }
+            });
+        }
+    });
+};
+
+const DeleteStudent = (data) => {
+    const { email, fullName } = data;
+
+    const params = {
+        Key: {
+            email: { S: email },
+            fullName: { S: fullName },
+        },
+        TableName: "students",
+    };
+
+    dynamodb.deleteItem(params, function (err, data) {
+        if (err) console.log(err, err.stack);
+        // an error occurred
+        else console.log("Deleted successfully.", data); // successful response
+    });
+};
 
 // CreateTable();
 
 // AddItem({
-//     fullName: "Test Student 2",
-//     email: "teststudent2@gmail.com",
+//     fullName: "Test Student 3",
+//     email: "teststudent3@gmail.com",
 //     password: "qwerty",
 //     college: "HIT-K",
 //     degree: "B. Tech. CSE",
 //     semester: 5,
 //     phoneNo: "9477388223",
 //     purchasedNotes: ["fr56yvfrt6uj",],
-//     cart: ["jki76trfcvbhy5esx",]
+//     cart: ["note_id4", "note_id1",],
+//     credits: 120
 // });
 
 // ScanTable();
 
-// GetItem({ fullName: "Test Student 2", email: "teststudent2@gmail.com" });
+// GetItem({ fullName: "Test Student 3", email: "teststudent3@gmail.com" });
 
 // GetPurchasedNotes({
 //     email: "teststudent1@gmail.com",
@@ -254,3 +366,10 @@ const UpdateCart = data => {
 // });
 
 // UpdateCart({ fullName: "Test Student 2", email: "teststudent2@gmail.com" });
+
+// DeleteStudent({ fullName: "Test Student 3", email: "teststudent3@gmail.com" })
+
+// CheckoutCredits({
+//     fullName: "Test Student 3",
+//     email: "teststudent3@gmail.com",
+// });

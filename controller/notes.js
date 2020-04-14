@@ -39,11 +39,11 @@ const CreateTable = () => {
 };
 
 const AddItem = (data) => {
-    const { noteid, name, professor, url } = data;
+    const { noteid, name, professor, url,requiredCredits } = data;
 
     var params = {
         TableName: "notes",
-        Item: { noteid, name, professor, url },
+        Item: { noteid, name, professor, url, requiredCredits },
     };
 
     console.log("Adding a new item...");
@@ -156,14 +156,16 @@ exports.GetBatchNotes = (noteids) => {
     dynamodb.batchGetItem(params, function (err, data) {
         if (err) console.log(err, err.stack);
         // an error occurred
-        else console.log(JSON.stringify(data.Responses.notes)); // successful response
+        else {
+            console.log(JSON.stringify(data.Responses.notes)); // successful response
+        }
     });
 };
 
 exports.AddNotes = (toAddNotes) => {
 
     const notes = toAddNotes.map((note) => {
-        const { noteid, name, professor, url } = note;
+        const { noteid, name, professor, url, requiredCredits } = note;
         return {
             PutRequest: {
                 Item: {
@@ -171,6 +173,7 @@ exports.AddNotes = (toAddNotes) => {
                     name: { S: name },
                     professor: { S: professor },
                     url: { S: url },
+                    requiredCredits: { S: requiredCredits }
                 },
             },
         };
@@ -194,14 +197,15 @@ exports.AddNotes = (toAddNotes) => {
 // CreateTable();
 
 // AddItem({
-//     noteid: "sdfghi98765re",
-//     name: "Test Subject 3",
-//     professor: "Test Professor 3",
-//     url: "what_ever.com"
+//     noteid: "note_id1",
+//     name: "Test Subject 2",
+//     professor: "Test Professor 2",
+//     url: "what_ever.com",
+//     requiredCredits: 30,
 // });
 
 // GetItem({ noteid: "fr56yvfrt6uj" });
 
 // GetBatchNotes(["jki76trfcvbhy5esx", "nvfde4567ujn", "sdfghi98765re"]);
 
-DeleteNote({ noteid: "note_id_1" })
+// DeleteNote({ noteid: "note_id4" })
