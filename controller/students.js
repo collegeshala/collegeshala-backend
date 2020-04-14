@@ -341,6 +341,35 @@ const DeleteStudent = (data) => {
     });
 };
 
+const PurchaseCredits = (data) => {
+    const { add_credits, email, fullName } = data;
+
+    const params = {
+        TableName: "students",
+        Key: {
+            email,
+            fullName,
+        },
+        UpdateExpression: "set credits = credits + :val",
+        ExpressionAttributeValues: {
+            ":val": add_credits,
+        },
+        ReturnValues: "UPDATED_NEW",
+    };
+
+    console.log("Updating credits...");
+    docClient.update(params, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to update item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
+        }
+    });
+};
+
 // CreateTable();
 
 // AddItem({
@@ -372,4 +401,10 @@ const DeleteStudent = (data) => {
 // CheckoutCredits({
 //     fullName: "Test Student 3",
 //     email: "teststudent3@gmail.com",
+// });
+
+// PurchaseCredits({
+//     email: "teststudent3@gmail.com",
+//     fullName: "Test Student 3",
+//     add_credits: 30,
 // });
