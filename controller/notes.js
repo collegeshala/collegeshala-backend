@@ -192,6 +192,72 @@ exports.AddNotes = (toAddNotes) => {
     });
 };
 
+const GetNotesByName = (args) => {
+    
+    const { note_name } = args;
+
+    var params = {
+        TableName: "notes",
+        ProjectionExpression: "noteid, #nm",
+        ExpressionAttributeNames: { "#nm": "name" }
+    };
+
+    console.log("Scanning notes table.");
+    docClient.scan(params, onScan)
+
+    function onScan(err, data) {
+        if (err) {
+            console.error(
+                "Unable to scan the table. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+
+            function isSubstring (a, b) {
+                a = a.toLowerCase();
+                b = b.toLowerCase();
+
+                return b.includes(a)
+            }
+
+            // print all the notes
+            console.log("Scan succeeded.");
+            
+            const reqNotes = data.Items.filter(note => isSubstring(note_name, note.name))
+
+            const reqNoteIds = reqNotes.map(note => {
+                return {
+                    noteid: { S: note.noteid }
+                }
+            })
+
+            const params = {
+                RequestItems: {
+                    notes: {
+                        Keys: reqNoteIds,
+                    },
+                },
+            };
+        
+            dynamodb.batchGetItem(params, function (err, data) {
+                if (err) console.log(err, err.stack);
+                // an error occurred
+                else {
+                    console.log(JSON.stringify(data.Responses.notes)); // successful response
+                }
+            });
+
+            // continue scanning if we have more notes, because
+            // scan can retrieve a maximum of 1MB of data
+            if (typeof data.LastEvaluatedKey != "undefined") {
+                console.log("Scanning for more...");
+                params.ExclusiveStartKey = data.LastEvaluatedKey;
+                docClient.scan(params, onScan);
+            }
+        }
+    }
+};
+
 // ScanTable();
 
 // CreateTable();
@@ -209,3 +275,5 @@ exports.AddNotes = (toAddNotes) => {
 // GetBatchNotes(["jki76trfcvbhy5esx", "nvfde4567ujn", "sdfghi98765re"]);
 
 // DeleteNote({ noteid: "note_id4" })
+
+GetNotesByName({ note_name: "tes" });
