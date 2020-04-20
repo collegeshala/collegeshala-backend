@@ -370,6 +370,56 @@ const PurchaseCredits = (data) => {
     });
 };
 
+const AddToCart = (data) => {
+    const { email, fullName, noteids } = data;
+
+    const getParams = {
+        TableName: "students",
+        Key: {
+            email,
+            fullName,
+        },
+    };
+
+    docClient.get(getParams, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            const { cart } = data.Item;
+            const updatedCart = cart.concat(noteids);
+
+            const updateParams = {
+                TableName: "students",
+                Key: { email, fullName },
+                UpdateExpression: "set cart = :c",
+                ExpressionAttributeValues: {
+                    ":c": [],
+                    ":p": updatedCart,
+                },
+                ReturnValues: "UPDATED_NEW",
+            };
+
+            console.log("Updating the item...");
+            docClient.update(updateParams, (err, data) => {
+                if (err) {
+                    console.error(
+                        "Unable to update item. Error JSON:",
+                        JSON.stringify(err, null, 2)
+                    );
+                } else {
+                    console.log(
+                        "UpdateItem succeeded:",
+                        JSON.stringify(data, null, 2)
+                    );
+                }
+            });
+        }
+    });
+};
+
 // CreateTable();
 
 // AddItem({
