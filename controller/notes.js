@@ -192,14 +192,14 @@ exports.AddNotes = (toAddNotes) => {
     });
 };
 
-const GetNotesByName = (args) => {
+const GetNotesByAttribute = (args) => {
     
-    const { note_name } = args;
+    const { key, value } = args;
 
     var params = {
         TableName: "notes",
-        ProjectionExpression: "noteid, #nm",
-        ExpressionAttributeNames: { "#nm": "name" }
+        ProjectionExpression: "noteid, #attr",
+        ExpressionAttributeNames: { "#attr": key }
     };
 
     console.log("Scanning notes table.");
@@ -223,7 +223,7 @@ const GetNotesByName = (args) => {
             // print all the notes
             console.log("Scan succeeded.");
             
-            const reqNotes = data.Items.filter(note => isSubstring(note_name, note.name))
+            const reqNotes = data.Items.filter(note => isSubstring(value, note[key]))
 
             const reqNoteIds = reqNotes.map(note => {
                 return {
@@ -276,4 +276,4 @@ const GetNotesByName = (args) => {
 
 // DeleteNote({ noteid: "note_id4" })
 
-GetNotesByName({ note_name: "tes" });
+// GetNotesByAttribute({ key: "professor", value: "jee" });
