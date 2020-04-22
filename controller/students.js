@@ -57,6 +57,8 @@ const AddItem = (data) => {
         purchasedNotes,
         cart,
         credits,
+        creditsPurchaseRecord,
+        notesPurchaseRecord,
     } = data;
 
     let date_obj = new Date();
@@ -76,6 +78,8 @@ const AddItem = (data) => {
             timeOfCreation,
             cart,
             credits,
+            creditsPurchaseRecord,
+            notesPurchaseRecord,
         },
     };
 
@@ -191,6 +195,7 @@ const GetPurchasedNotes = (data) => {
     );
 };
 
+// shifts notes in cart to purchasedNotes section
 const UpdateCart = (data) => {
     const { email, fullName } = data;
 
@@ -209,6 +214,7 @@ const UpdateCart = (data) => {
                 JSON.stringify(err, null, 2)
             );
         } else {
+
             const { cart, purchasedNotes } = data.Item;
             const updatedPurchasedNotes = purchasedNotes.concat(cart);
 
@@ -252,7 +258,7 @@ const CheckoutCredits = (data) => {
         },
     };
 
-    // getting list of purchased notes' ids
+    // getting list of cart notes' ids
     docClient.get(params, (err, data) => {
         if (err) {
             console.error(
@@ -274,10 +280,13 @@ const CheckoutCredits = (data) => {
                 },
             };
 
+            console.log(keys);
+
             // getting requiredCredits for each note in student's cart
             dynamodb.batchGetItem(params, function (err, data) {
                 if (err) console.log(err, err.stack);
                 // an error occurred
+
                 else {
                     // console.log(JSON.stringify(data.Responses.notes)); // successful response
                     let cost = 0;
@@ -293,12 +302,22 @@ const CheckoutCredits = (data) => {
                     }
                     const newCredits = credits - cost;
 
+                    let date_obj = new Date();
+                    const timeOfCreation = date_obj.toISOString();
+
+                    const record = [{
+                        notesPurchased: cart,
+                        totalCredits: cost,
+                        timestamp: timeOfCreation,
+                    },]
+
                     const updateParams = {
                         TableName: "students",
                         Key: { email, fullName },
-                        UpdateExpression: "set credits = :c",
+                        UpdateExpression: "set credits = :c, notesPurchaseRecord = list_append (notesPurchaseRecord, :rcd)",
                         ExpressionAttributeValues: {
                             ":c": newCredits,
+                            ":rcd": record,
                         },
                         ReturnValues: "UPDATED_NEW",
                     };
@@ -344,15 +363,25 @@ const DeleteStudent = (data) => {
 const PurchaseCredits = (data) => {
     const { add_credits, email, fullName } = data;
 
+    let date_obj = new Date();
+    const timeOfCreation = date_obj.toISOString();
+
+    const record = [{
+        creditsPurchased: add_credits,
+        cost: add_credits * 10,
+        timestamp: timeOfCreation,
+    },]
+
     const params = {
         TableName: "students",
         Key: {
             email,
             fullName,
         },
-        UpdateExpression: "set credits = credits + :val",
+        UpdateExpression: "set credits = credits + :val, creditsPurchaseRecord = list_append (creditsPurchaseRecord, :rec)",
         ExpressionAttributeValues: {
             ":val": add_credits,
+            ":rec": record
         },
         ReturnValues: "UPDATED_NEW",
     };
@@ -370,6 +399,7 @@ const PurchaseCredits = (data) => {
     });
 };
 
+// adds given notes to student's cart
 const AddToCart = (data) => {
     const { email, fullName, noteids } = data;
 
@@ -423,21 +453,23 @@ const AddToCart = (data) => {
 // CreateTable();
 
 // AddItem({
-//     fullName: "Test Student 3",
-//     email: "teststudent3@gmail.com",
+//     fullName: "Test Student 4",
+//     email: "teststudent4@gmail.com",
 //     password: "qwerty",
 //     college: "HIT-K",
 //     degree: "B. Tech. CSE",
-//     semester: 5,
+//     semester: 3,
 //     phoneNo: "9477388223",
 //     purchasedNotes: ["fr56yvfrt6uj",],
 //     cart: ["note_id4", "note_id1",],
-//     credits: 120
+//     credits: 200,
+//     creditsPurchaseRecord: [],
+//     notesPurchaseRecord: [],
 // });
 
 // ScanTable();
 
-// GetItem({ fullName: "Test Student 3", email: "teststudent3@gmail.com" });
+// GetItem({ fullName: "Test Student 4", email: "teststudent4@gmail.com" });
 
 // GetPurchasedNotes({
 //     email: "teststudent1@gmail.com",
@@ -446,15 +478,15 @@ const AddToCart = (data) => {
 
 // UpdateCart({ fullName: "Test Student 2", email: "teststudent2@gmail.com" });
 
-// DeleteStudent({ fullName: "Test Student 3", email: "teststudent3@gmail.com" })
+// DeleteStudent({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
 
-// CheckoutCredits({
-//     fullName: "Test Student 3",
-//     email: "teststudent3@gmail.com",
-// });
+CheckoutCredits({
+    fullName: "Test Student 4",
+    email: "teststudent4@gmail.com",
+});
 
 // PurchaseCredits({
-//     email: "teststudent3@gmail.com",
-//     fullName: "Test Student 3",
-//     add_credits: 30,
+//     email: "teststudent4@gmail.com",
+//     fullName: "Test Student 4",
+//     add_credits: 25,
 // });

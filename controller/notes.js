@@ -272,7 +272,7 @@ const GetNotesByAttribute = (args) => {
 
 // GetItem({ noteid: "fr56yvfrt6uj" });
 
-// GetBatchNotes(["jki76trfcvbhy5esx", "nvfde4567ujn", "sdfghi98765re"]);
+// GetBatchNotes(["note_id4", "note_id1"]);
 
 // DeleteNote({ noteid: "note_id4" })
 
