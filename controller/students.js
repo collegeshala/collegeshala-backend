@@ -450,6 +450,49 @@ const AddToCart = (data) => {
     });
 };
 
+const UpdateStudent = args => { 
+
+    if(Object.values(args.params).length == 0) {
+        return new Error("No values to update")
+    }
+
+    const { email, fullName } = args;
+    let exp = "set", i = 1, attr = {}, val = {};
+
+    for(prop in args.params) {
+        if(args.params[prop] != undefined) {
+            exp += ` #prop${i} = :val${i},`;
+            attr[`#prop${i}`] = prop;
+            val[`:val${i}`] = args.params[prop]
+        }
+        i++;
+    }
+    exp = exp.slice(0, -1);
+
+    const updateParams = {
+        TableName: "students",
+        Key: { email, fullName },
+        UpdateExpression: exp,
+        ExpressionAttributeNames: attr,
+        ExpressionAttributeValues: val,
+        ReturnValues: "UPDATED_NEW",
+    };
+
+    docClient.update(updateParams, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to update item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            console.log(
+                "UpdateItem succeeded:",
+                JSON.stringify(data, null, 2)
+            );
+        }
+    });
+}
+
 // CreateTable();
 
 // AddItem({
@@ -480,13 +523,24 @@ const AddToCart = (data) => {
 
 // DeleteStudent({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
 
-CheckoutCredits({
-    fullName: "Test Student 4",
-    email: "teststudent4@gmail.com",
-});
+// CheckoutCredits({
+//     fullName: "Test Student 4",
+//     email: "teststudent4@gmail.com",
+// });
 
 // PurchaseCredits({
 //     email: "teststudent4@gmail.com",
 //     fullName: "Test Student 4",
 //     add_credits: 25,
 // });
+
+// UpdateStudent({
+//     email: "teststudent4@gmail.com",
+//     fullName: "Test Student 4",
+//     params: {
+//         password: "asdfgh",
+//         college: "MSIT",
+//         semester: 6,
+//         phoneNo: undefined,
+//     }
+// })
