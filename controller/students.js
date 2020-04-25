@@ -493,6 +493,30 @@ const UpdateStudent = args => {
     });
 }
 
+const GetStudentNotes = data => {
+    const { email, fullName } = data;
+
+    const getParams = {
+        TableName: "students",
+        ProjectionExpression: "cart",
+        Key: {
+            email,
+            fullName,
+        },
+    };
+
+    docClient.get(getParams, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            console.log(JSON.stringify(data.Item)) // => {cart: [,,,]}
+        }
+    });
+};
+
 // CreateTable();
 
 // AddItem({
@@ -544,3 +568,5 @@ const UpdateStudent = args => {
 //         phoneNo: undefined,
 //     }
 // })
+
+GetStudentNotes({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
