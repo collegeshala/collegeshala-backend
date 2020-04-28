@@ -517,6 +517,32 @@ const GetStudentNotes = data => {
     });
 };
 
+const getData = data => {
+    const { email, fullName } = data;
+
+    const getParams = {
+        TableName: "students",
+        Key: {
+            email,
+            fullName,
+        },
+    };
+
+    return new Promise((resolve, reject) => {
+        docClient.get(getParams, (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data.Item);
+            }
+        });
+    })
+};
+
+// getData({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
+//     .then(res => console.log(res))
+//     .catch(err => console.error(err));
+
 // CreateTable();
 
 // AddItem({
@@ -569,4 +595,4 @@ const GetStudentNotes = data => {
 //     }
 // })
 
-GetStudentNotes({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
+// GetStudentNotes({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })

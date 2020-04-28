@@ -38,12 +38,35 @@ const CreateTable = () => {
     });
 };
 
-const AddItem = (data) => {
-    const { noteid, name, professor, url,requiredCredits } = data;
+const AddNewNote = (data) => {
+    const {
+        noteid,
+        name,
+        professorname,
+        noteurl,
+        requiredCredits,
+        professoremail,
+        chaptername,
+        subjectname,
+        universityname,
+        sem,
+    } = data;
 
     var params = {
         TableName: "notes",
-        Item: { noteid, name, professor, url, requiredCredits },
+        Item: {
+            noteid,
+            name,
+            professorname,
+            noteurl,
+            requiredCredits,
+            professoremail,
+            chaptername,
+            subjectname,
+            universityname,
+            sem,
+            visibility = false
+        },
     };
 
     console.log("Adding a new item...");
@@ -124,20 +147,20 @@ exports.GetItem = (data) => {
     });
 };
 
-const DeleteNote = note => {
-
+const DeleteNote = (note) => {
     const { noteid } = note;
 
     const params = {
-        Key: { "noteid": { "S": noteid } },
+        Key: { noteid: { S: noteid } },
         TableName: "notes",
-    }
+    };
 
-    dynamodb.deleteItem(params, function(err, data) {
-        if (err) console.log(err, err.stack); // an error occurred
-        else     console.log(data);           // successful response
+    dynamodb.deleteItem(params, function (err, data) {
+        if (err) console.log(err, err.stack);
+        // an error occurred
+        else console.log(data); // successful response
     });
-}
+};
 
 exports.GetBatchNotes = (noteids) => {
     const keys = noteids.map((noteid) => {
@@ -163,7 +186,6 @@ exports.GetBatchNotes = (noteids) => {
 };
 
 exports.AddNotes = (toAddNotes) => {
-
     const notes = toAddNotes.map((note) => {
         const { noteid, name, professor, url, requiredCredits } = note;
         return {
@@ -173,7 +195,7 @@ exports.AddNotes = (toAddNotes) => {
                     name: { S: name },
                     professor: { S: professor },
                     url: { S: url },
-                    requiredCredits: { S: requiredCredits }
+                    requiredCredits: { S: requiredCredits },
                 },
             },
         };
@@ -193,17 +215,16 @@ exports.AddNotes = (toAddNotes) => {
 };
 
 const GetNotesByAttribute = (args) => {
-    
     const { key, value } = args;
 
     var params = {
         TableName: "notes",
         ProjectionExpression: "noteid, #attr",
-        ExpressionAttributeNames: { "#attr": key }
+        ExpressionAttributeNames: { "#attr": key },
     };
 
     console.log("Scanning notes table.");
-    docClient.scan(params, onScan)
+    docClient.scan(params, onScan);
 
     function onScan(err, data) {
         if (err) {
@@ -212,24 +233,25 @@ const GetNotesByAttribute = (args) => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-
-            function isSubstring (a, b) {
+            function isSubstring(a, b) {
                 a = a.toLowerCase();
                 b = b.toLowerCase();
 
-                return b.includes(a)
+                return b.includes(a);
             }
 
             // print all the notes
             console.log("Scan succeeded.");
-            
-            const reqNotes = data.Items.filter(note => isSubstring(value, note[key]))
 
-            const reqNoteIds = reqNotes.map(note => {
+            const reqNotes = data.Items.filter((note) =>
+                isSubstring(value, note[key])
+            );
+
+            const reqNoteIds = reqNotes.map((note) => {
                 return {
-                    noteid: { S: note.noteid }
-                }
-            })
+                    noteid: { S: note.noteid },
+                };
+            });
 
             const params = {
                 RequestItems: {
@@ -238,7 +260,7 @@ const GetNotesByAttribute = (args) => {
                     },
                 },
             };
-        
+
             dynamodb.batchGetItem(params, function (err, data) {
                 if (err) console.log(err, err.stack);
                 // an error occurred
