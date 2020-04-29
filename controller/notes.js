@@ -42,10 +42,10 @@ const AddNewNote = (data) => {
     const {
         noteid,
         name,
-        professorname,
+        professor,
         noteurl,
         requiredCredits,
-        professoremail,
+        professorEmail,
         chaptername,
         subjectname,
         universityname,
@@ -57,15 +57,15 @@ const AddNewNote = (data) => {
         Item: {
             noteid,
             name,
-            professorname,
+            professor,
             noteurl,
             requiredCredits,
-            professoremail,
+            professorEmail,
             chaptername,
             subjectname,
             universityname,
             sem,
-            visibility = false
+            visibility: false
         },
     };
 
@@ -284,18 +284,19 @@ const GetNotesByAttribute = (args) => {
 
 // CreateTable();
 
-// AddItem({
-//     noteid: "note_id1",
-//     name: "Test Subject 2",
+// AddNewNote({
+//     noteid: "note_id3",
+//     name: "Test Subject Y",
 //     professor: "Test Professor 2",
+//     professorEmail: "testprof2@gmail.com",
 //     url: "what_ever.com",
-//     requiredCredits: 30,
+//     requiredCredits: 50,
 // });
 
-// GetItem({ noteid: "fr56yvfrt6uj" });
+// GetItem({ noteid: "note_id1" });
 
 // GetBatchNotes(["note_id4", "note_id1"]);
 
-// DeleteNote({ noteid: "note_id4" })
+// DeleteNote({ noteid: "note_id3" })
 
 // GetNotesByAttribute({ key: "professor", value: "jee" });

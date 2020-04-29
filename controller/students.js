@@ -1,6 +1,7 @@
 const AWS = require("aws-sdk");
 const dotenv = require("dotenv");
 const Notes = require("./notes");
+const AddEarning = require("./professors");
 dotenv.config();
 
 AWS.config.update({
@@ -207,7 +208,7 @@ const UpdateCart = (data) => {
         },
     };
 
-    docClient.get(getParams, (err, data) => {
+    docClient.get(getParams, async (err, data) => {
         if (err) {
             console.error(
                 "Unable to read item. Error JSON:",
@@ -216,6 +217,13 @@ const UpdateCart = (data) => {
         } else {
 
             const { cart, purchasedNotes } = data.Item;
+            const keys = cart.map((noteid) => {
+                return { noteid: { S: noteid } };
+            });
+            await AddEarning({
+                studentEmail: email,
+                noteids: keys
+            });
             const updatedPurchasedNotes = purchasedNotes.concat(cart);
 
             const updateParams = {
@@ -229,7 +237,6 @@ const UpdateCart = (data) => {
                 ReturnValues: "UPDATED_NEW",
             };
 
-            console.log("Updating the item...");
             docClient.update(updateParams, (err, data) => {
                 if (err) {
                     console.error(
@@ -554,8 +561,8 @@ const getData = data => {
 //     semester: 3,
 //     phoneNo: "9477388223",
 //     purchasedNotes: ["fr56yvfrt6uj",],
-//     cart: ["note_id4", "note_id1",],
-//     credits: 200,
+//     cart: ["note_id2", "note_id1",],
+//     credits: 100,
 //     creditsPurchaseRecord: [],
 //     notesPurchaseRecord: [],
 // });
@@ -569,7 +576,16 @@ const getData = data => {
 //     fullName: "Test Student 1",
 // });
 
-// UpdateCart({ fullName: "Test Student 2", email: "teststudent2@gmail.com" });
+// UpdateCart({ fullName: "Test Student 4", email: "teststudent4@gmail.com" });
+
+// UpdateStudent({
+//     email: "teststudent4@gmail.com",
+//     fullName: "Test Student 4",
+//     params: {
+//         cart: ["note_id4", "note_id1", "note_id3"],
+//         purchasedNotes: [],
+//     }
+// })
 
 // DeleteStudent({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
 
@@ -584,15 +600,6 @@ const getData = data => {
 //     add_credits: 25,
 // });
 
-// UpdateStudent({
-//     email: "teststudent4@gmail.com",
-//     fullName: "Test Student 4",
-//     params: {
-//         password: "asdfgh",
-//         college: "MSIT",
-//         semester: 6,
-//         phoneNo: undefined,
-//     }
-// })
-
 // GetStudentNotes({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
+
+// Notes.GetItem({ noteid: "note_id1" });
