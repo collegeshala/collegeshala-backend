@@ -116,7 +116,7 @@ const ScanTable = () => {
         // ExpressionAttributeValues: {
         //     ":start_yr": 1950,
         //     ":end_yr": 1959,
-        // },
+        // },email
     };
 
     console.log("Scanning professors table.");

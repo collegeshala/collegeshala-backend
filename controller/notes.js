@@ -9,7 +9,9 @@ AWS.config.update({
     secretAccessKey: process.env.Secret_Access_Key,
 });
 
-const dynamodb = new AWS.DynamoDB();
+const dynamodb = new AWS.DynamoDB({
+    apiVersion: "2012-08-10",
+});
 const docClient = new AWS.DynamoDB.DocumentClient();
 
 const CreateTable = () => {
@@ -65,7 +67,7 @@ const AddNewNote = (data) => {
             subjectname,
             universityname,
             sem,
-            visibility: false
+            visibility: false,
         },
     };
 

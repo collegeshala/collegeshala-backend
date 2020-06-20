@@ -215,14 +215,13 @@ const UpdateCart = (data) => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-
             const { cart, purchasedNotes } = data.Item;
             const keys = cart.map((noteid) => {
                 return { noteid: { S: noteid } };
             });
             await AddEarning({
                 studentEmail: email,
-                noteids: keys
+                noteids: keys,
             });
             const updatedPurchasedNotes = purchasedNotes.concat(cart);
 
@@ -293,7 +292,6 @@ const CheckoutCredits = (data) => {
             dynamodb.batchGetItem(params, function (err, data) {
                 if (err) console.log(err, err.stack);
                 // an error occurred
-
                 else {
                     // console.log(JSON.stringify(data.Responses.notes)); // successful response
                     let cost = 0;
@@ -312,16 +310,19 @@ const CheckoutCredits = (data) => {
                     let date_obj = new Date();
                     const timeOfCreation = date_obj.toISOString();
 
-                    const record = [{
-                        notesPurchased: cart,
-                        totalCredits: cost,
-                        timestamp: timeOfCreation,
-                    },]
+                    const record = [
+                        {
+                            notesPurchased: cart,
+                            totalCredits: cost,
+                            timestamp: timeOfCreation,
+                        },
+                    ];
 
                     const updateParams = {
                         TableName: "students",
                         Key: { email, fullName },
-                        UpdateExpression: "set credits = :c, notesPurchaseRecord = list_append (notesPurchaseRecord, :rcd)",
+                        UpdateExpression:
+                            "set credits = :c, notesPurchaseRecord = list_append (notesPurchaseRecord, :rcd)",
                         ExpressionAttributeValues: {
                             ":c": newCredits,
                             ":rcd": record,
@@ -373,11 +374,13 @@ const PurchaseCredits = (data) => {
     let date_obj = new Date();
     const timeOfCreation = date_obj.toISOString();
 
-    const record = [{
-        creditsPurchased: add_credits,
-        cost: add_credits * 10,
-        timestamp: timeOfCreation,
-    },]
+    const record = [
+        {
+            creditsPurchased: add_credits,
+            cost: add_credits * 10,
+            timestamp: timeOfCreation,
+        },
+    ];
 
     const params = {
         TableName: "students",
@@ -385,10 +388,11 @@ const PurchaseCredits = (data) => {
             email,
             fullName,
         },
-        UpdateExpression: "set credits = credits + :val, creditsPurchaseRecord = list_append (creditsPurchaseRecord, :rec)",
+        UpdateExpression:
+            "set credits = credits + :val, creditsPurchaseRecord = list_append (creditsPurchaseRecord, :rec)",
         ExpressionAttributeValues: {
             ":val": add_credits,
-            ":rec": record
+            ":rec": record,
         },
         ReturnValues: "UPDATED_NEW",
     };
@@ -457,20 +461,22 @@ const AddToCart = (data) => {
     });
 };
 
-const UpdateStudent = args => { 
-
-    if(Object.values(args.params).length == 0) {
-        return new Error("No values to update")
+const UpdateStudent = (args) => {
+    if (Object.values(args.params).length == 0) {
+        return new Error("No values to update");
     }
 
     const { email, fullName } = args;
-    let exp = "set", i = 1, attr = {}, val = {};
+    let exp = "set",
+        i = 1,
+        attr = {},
+        val = {};
 
-    for(prop in args.params) {
-        if(args.params[prop] != undefined) {
+    for (prop in args.params) {
+        if (args.params[prop] != undefined) {
             exp += ` #prop${i} = :val${i},`;
             attr[`#prop${i}`] = prop;
-            val[`:val${i}`] = args.params[prop]
+            val[`:val${i}`] = args.params[prop];
         }
         i++;
     }
@@ -492,15 +498,12 @@ const UpdateStudent = args => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-            console.log(
-                "UpdateItem succeeded:",
-                JSON.stringify(data, null, 2)
-            );
+            console.log("UpdateItem succeeded:", JSON.stringify(data, null, 2));
         }
     });
-}
+};
 
-const GetStudentNotes = data => {
+const GetStudentNotes = (data) => {
     const { email, fullName } = data;
 
     const getParams = {
@@ -519,12 +522,59 @@ const GetStudentNotes = data => {
                 JSON.stringify(err, null, 2)
             );
         } else {
-            console.log(JSON.stringify(data.Item)) // => {cart: [,,,]}
+            console.log(JSON.stringify(data.Item)); // => {cart: [,,,]}
         }
     });
 };
 
-const getData = data => {
+const removeFromCart = async (params) => {
+    const { noteid, email, fullName } = params;
+    const getParams = {
+        TableName: "students",
+        ProjectionExpression: "cart",
+        Key: {
+            email,
+            fullName,
+        },
+    };
+
+    docClient.get(getParams, (err, data) => {
+        if (err) {
+            console.error(
+                "Unable to read item. Error JSON:",
+                JSON.stringify(err, null, 2)
+            );
+        } else {
+            console.log(JSON.stringify(data.Item)); // => {cart: [,,,]}
+            const cartItems = data.Item.cart;
+            const updatedCart = cartItems.filter((id) => id != noteid);
+            const updateParams = {
+                TableName: "students",
+                Key: { email, fullName },
+                UpdateExpression: "set cart = :c",
+                ExpressionAttributeValues: {
+                    ":c": updatedCart,
+                },
+                ReturnValues: "UPDATED_NEW",
+            };
+            docClient.update(updateParams, (err, data) => {
+                if (err) {
+                    console.error(
+                        "Unable to update item. Error JSON:",
+                        JSON.stringify(err, null, 2)
+                    );
+                } else {
+                    console.log(
+                        "UpdateItem succeeded:",
+                        JSON.stringify(data, null, 2)
+                    );
+                }
+            });
+        }
+    });
+};
+
+const getData = (data) => {
     const { email, fullName } = data;
 
     const getParams = {
@@ -543,7 +593,7 @@ const getData = data => {
                 resolve(data.Item);
             }
         });
-    })
+    });
 };
 
 // getData({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
@@ -603,3 +653,9 @@ const getData = data => {
 // GetStudentNotes({ fullName: "Test Student 4", email: "teststudent4@gmail.com" })
 
 // Notes.GetItem({ noteid: "note_id1" });
+
+// removeFromCart({
+//     noteid: "note_id1",
+//     email: "teststudent4@gmail.com",
+//     fullName: "Test Student 4",
+// });
