@@ -17,7 +17,7 @@ const dynamodb = new AWS.DynamoDB({
 // const docClient = new AWS.DynamoDB.DocumentClient();
 
 const params = {
-    ProjectionExpression: "cart, email",
+    ProjectionExpression: "purchasedNotes, email",
     TableName: "students",
     Limit: 30,
 };
@@ -26,11 +26,20 @@ const scanStudents = (params) => {
     dynamodb.scan(params, (err, data) => {
         if (err) console.error(err);
         else {
-            // console.log("data fetched successfully!");
-            const notes = data.Items;
-            // console.log(JSON.stringify(notes));
-            // console.log("total number of students:", data.Count);
-            checkValidity(notes);
+            const students = data.Items.filter((studentObj) => {
+                if (studentObj.purchasedNotes) return true;
+                else return false;
+            });
+            const reqStudents = students.map((student) => {
+                if (student.purchasedNotes) {
+                    return {
+                        email: student.email.S,
+                        notes: student.purchasedNotes.L.map((obj) => obj.S),
+                    };
+                }
+            });
+            // console.log(reqStudents);
+            checkNotes(reqStudents);
 
             if (typeof data.LastEvaluatedKey != "undefined") {
                 // console.log(data.LastEvaluatedKey);
@@ -38,6 +47,27 @@ const scanStudents = (params) => {
                 params.ExclusiveStartKey = data.LastEvaluatedKey;
                 scanStudents(params);
             }
+        }
+    });
+};
+
+const checkNotes = (purchasedNotes = []) => {
+    const raw_notes = fs.readFileSync("tests/test_01/notes.json", "utf8");
+    const setOfNotes = new Set();
+    const notes = JSON.parse(raw_notes).notes;
+    notes.forEach((noteId) => {
+        setOfNotes.add(noteId);
+    });
+
+    purchasedNotes.forEach((student) => {
+        const { email, notes } = student;
+        if (notes.length != 0) {
+            notes.forEach((id) => {
+                if (!setOfNotes.has(id)) {
+                    console.log("email:", email);
+                    console.log("unfound note in purchasedNotes:", id);
+                }
+            });
         }
     });
 };
@@ -67,24 +97,32 @@ const checkValidity = (cart = []) => {
     });
 };
 
-const scanNotes = () => {
-    dynamodb.scan(
-        {
-            ProjectionExpression: "noteId",
-            TableName: "notes",
-            Limit: 3,
-        },
-        (err, data) => {
-            if (err) console.error(err);
-            else {
-                console.log(data.Items);
-                console.log(data.LastEvaluatedKey);
+const scanNotes = (params, notes = []) => {
+    dynamodb.scan(params, (err, data) => {
+        if (err) console.error(err);
+        else {
+            const incomingNotes = data.Items.map((item) => item.noteId.S);
+            notes = notes.concat(incomingNotes);
+            if (typeof data.LastEvaluatedKey != "undefined") {
+                // console.log(data.LastEvaluatedKey);
+                console.log("Scanning for more...");
+                params.ExclusiveStartKey = data.LastEvaluatedKey;
+                scanNotes(params, notes);
+            } else {
+                console.log(notes);
+                const data = JSON.stringify({ notes });
+                fs.writeFileSync("tests/test_01/notes.json", data);
+                console.log("File written successfully!");
             }
         }
-    );
+    });
 };
 
-// scanNotes();
+// scanNotes({
+//     ProjectionExpression: "noteId",
+//     TableName: "notes",
+//     Limit: 30,
+// });
 
 scanStudents(params);
 
